@@ -1,0 +1,56 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Overview
+
+Backend for an Online Shopping Platform: catalog, cart, orders with status tracking, addresses, admin panel, search/filtering, reviews, coupons. ASP.NET Core Web API on **.NET 10**, EF Core with **SQL Server** (LocalDB in development), ASP.NET Core Identity with JWT bearer auth.
+
+The solution lives one level up from this folder: `final-project/MyApp.slnx`, with sibling projects `MyApp.Core`, `MyApp.DAL`, `MyApp.BLL` and this `MyApp.Api`. The full roadmap (data model, checkout flow, order status rules, phases 1–6) is in the plan this project was started from; Phase 1 (foundation, database, auth) is done.
+
+## Commands
+
+Run from this directory (`MyApp.Api`):
+
+- Build everything: `dotnet build ../MyApp.slnx`
+- Run: `dotnet run --launch-profile http` (http://localhost:5127) or `--launch-profile https` (https://localhost:7023)
+- Add a migration: `dotnet ef migrations add <Name> --project ../MyApp.DAL --startup-project . --output-dir Migrations`
+- Apply migrations: `dotnet ef database update --project ../MyApp.DAL --startup-project .`
+- Tests: none yet. Once a test project exists: `dotnet test --filter "FullyQualifiedName~ClassName.MethodName"`
+
+The `dotnet ef` commands need `ASPNETCORE_ENVIRONMENT=Development` (in PowerShell: `$env:ASPNETCORE_ENVIRONMENT='Development'`), because the connection string and JWT secret live only in `appsettings.Development.json`. The app does **not** apply migrations on startup; run `database update` first or startup seeding fails.
+
+`MyApp.Api.http` has ready-made requests (register, login, `/me` using the login token).
+
+## Architecture (layered)
+
+Dependencies go strictly downward: **Api → BLL → DAL → Core**.
+
+- **MyApp.Core**: entities (`Entities/`), enums, `Constants/Roles` (`Admin`, `Vendor`, `Customer`). `AppUser : IdentityUser`. Entities derive from `BaseEntity` (int `Id`, `CreatedAt`, `UpdatedAt`). The timestamps are set automatically in `AppDbContext.SaveChanges*`; never set them by hand.
+- **MyApp.DAL**:
+  - `AppDbContext : IdentityDbContext<AppUser>`, with one `IEntityTypeConfiguration<T>` per entity in `Data/Configurations/`. Relationships, indexes, check constraints and delete behaviour go there, not in attributes.
+  - A global convention makes every `decimal` `decimal(18,2)`.
+  - Generic `IRepository<T>` (exposes `Query()`, no tracking by default).
+  - `AddDal()` registers the DbContext and Identity (`AddIdentityCore`, no cookies).
+  - `Seed/DbSeeder` creates the roles plus the admin account from `SeedAdmin:*` config.
+- **MyApp.BLL**:
+  - DTOs, services (interface and implementation in the same file), `JwtOptions`, `AppClaimTypes`.
+  - Exceptions in `Exceptions/AppException.cs` (`BadRequest`/`Unauthorized`/`Forbidden`/`NotFound`/`Conflict`). Services throw these to signal errors.
+  - `AddBll()` calls `AddDal()` and reads `ConnectionStrings:DefaultConnection`.
+- **MyApp.Api**:
+  - Thin controllers that call BLL services and never use `AppDbContext` directly.
+  - `Middleware/AppExceptionHandler` converts `AppException` into a ProblemDetails response with its status code; anything else becomes a 500.
+  - `Services/CurrentUserService` implements the BLL's `ICurrentUserService` from the JWT claims.
+  - `Program.cs` is the composition root and is intentionally kept free of comments.
+
+## Conventions and gotchas
+
+- JWT claims use short names (`sub`, `email`, `name`, `role`; see `AppClaimTypes`). `MapInboundClaims = false`, so read the user id with `AppClaimTypes.UserId`, not `ClaimTypes.NameIdentifier`. `[Authorize(Roles = Roles.Admin)]` works because `RoleClaimType = "role"`.
+- Enums (`OrderStatus`, `PaymentStatus`, `CouponType`) are stored as strings.
+- `Order.ShippingAddress` is an EF complex type (columns `ShippingAddress_*`): a copy of the address at order time. `OrderItem` likewise stores `ProductName` and `UnitPrice`, so orders never depend on the current product data.
+- `Product.RowVersion` is a concurrency token. Checkout must catch `DbUpdateConcurrencyException` when decreasing stock and return 409.
+- `Product.IsDeleted` is a soft-delete flag with **no** global query filter. Filter it explicitly in catalog queries.
+- Delete behaviour: links to orders, products, categories and vendors use Restrict, so history is never cascade-deleted. Avoid adding cascades that create multiple cascade paths, which SQL Server rejects.
+- `AverageRating`/`ReviewCount` on `Product` are stored totals. Recalculate them whenever reviews change.
+- Request validation currently uses DataAnnotations on DTOs (`[ApiController]` returns 400 automatically).
+- The project folder is inside OneDrive and is not under git.

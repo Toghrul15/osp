@@ -1,0 +1,27 @@
+@MyApp.Api_HostAddress = http://localhost:5127
+
+### Register a customer
+POST {{MyApp.Api_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Test Customer",
+  "email": "customer@myapp.local",
+  "password": "Customer123!"
+}
+
+### Log in as the seeded admin
+# @name login
+POST {{MyApp.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@myapp.local",
+  "password": "Admin123!"
+}
+
+### Current user (uses the token from the login request above)
+GET {{MyApp.Api_HostAddress}}/api/auth/me
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+###

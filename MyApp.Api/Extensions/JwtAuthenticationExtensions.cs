@@ -1,0 +1,43 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using MyApp.BLL.Options;
+using MyApp.BLL.Security;
+
+namespace MyApp.Api.Extensions;
+
+public static class JwtAuthenticationExtensions
+{
+    public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
+    {
+        var jwt = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
+                  ?? throw new InvalidOperationException("The 'Jwt' configuration section is missing.");
+
+        if (Encoding.UTF8.GetByteCount(jwt.SecretKey) < 32)
+            throw new InvalidOperationException("Jwt:SecretKey must be at least 32 bytes long.");
+
+        services
+            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.MapInboundClaims = false;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = jwt.Issuer,
+                    ValidateAudience = true,
+                    ValidAudience = jwt.Audience,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.SecretKey)),
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.FromMinutes(1),
+                    NameClaimType = AppClaimTypes.Name,
+                    RoleClaimType = AppClaimTypes.Role
+                };
+            });
+
+        services.AddAuthorization();
+
+        return services;
+    }
+}

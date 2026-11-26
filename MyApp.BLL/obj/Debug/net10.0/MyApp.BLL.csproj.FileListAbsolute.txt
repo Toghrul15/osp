@@ -1,0 +1,17 @@
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.BLL\bin\Debug\net10.0\MyApp.BLL.deps.json
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.BLL\bin\Debug\net10.0\MyApp.BLL.dll
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.BLL\bin\Debug\net10.0\MyApp.BLL.pdb
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.BLL\bin\Debug\net10.0\MyApp.Core.dll
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.BLL\bin\Debug\net10.0\MyApp.DAL.dll
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.BLL\bin\Debug\net10.0\MyApp.DAL.pdb
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.BLL\bin\Debug\net10.0\MyApp.Core.pdb
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.BLL\obj\Debug\net10.0\MyApp.BLL.csproj.AssemblyReference.cache
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.BLL\obj\Debug\net10.0\MyApp.BLL.GeneratedMSBuildEditorConfig.editorconfig
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.BLL\obj\Debug\net10.0\MyApp.BLL.AssemblyInfoInputs.cache
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.BLL\obj\Debug\net10.0\MyApp.BLL.AssemblyInfo.cs
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.BLL\obj\Debug\net10.0\MyApp.BLL.csproj.CoreCompileInputs.cache
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.BLL\obj\Debug\net10.0\MyApp.BLL.csproj.Up2Date
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.BLL\obj\Debug\net10.0\MyApp.BLL.dll
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.BLL\obj\Debug\net10.0\refint\MyApp.BLL.dll
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.BLL\obj\Debug\net10.0\MyApp.BLL.pdb
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.BLL\obj\Debug\net10.0\ref\MyApp.BLL.dll
