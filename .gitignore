@@ -1,0 +1,22 @@
+# Build output
+bin/
+obj/
+
+# IDE
+.vs/
+*.user
+*.suo
+.idea/
+.vscode/
+
+# Secrets (see MyApp.Api/appsettings.Development.example.json)
+appsettings.Development.json
+appsettings.*.local.json
+
+# Uploaded files (keep the folder)
+MyApp.Api/wwwroot/uploads/*
+!MyApp.Api/wwwroot/uploads/.gitkeep
+
+# Claude Code local settings
+.claude/settings.local.json
+**/.claude/settings.local.json

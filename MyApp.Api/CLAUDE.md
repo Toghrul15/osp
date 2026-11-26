@@ -18,7 +18,7 @@ Run from this directory (`MyApp.Api`):
 - Apply migrations: `dotnet ef database update --project ../MyApp.DAL --startup-project .`
 - Tests: none yet. Once a test project exists: `dotnet test --filter "FullyQualifiedName~ClassName.MethodName"`
 
-The `dotnet ef` commands need `ASPNETCORE_ENVIRONMENT=Development` (in PowerShell: `$env:ASPNETCORE_ENVIRONMENT='Development'`), because the connection string and JWT secret live only in `appsettings.Development.json`. The app does **not** apply migrations on startup; run `database update` first or startup seeding fails.
+The `dotnet ef` commands need `ASPNETCORE_ENVIRONMENT=Development` (in PowerShell: `$env:ASPNETCORE_ENVIRONMENT='Development'`), because the connection string and JWT secret live only in `appsettings.Development.json`. That file is git-ignored; on a fresh clone, copy `appsettings.Development.example.json` to it and fill in the secret and admin password. The app does **not** apply migrations on startup; run `database update` first or startup seeding fails.
 
 `MyApp.Api.http` has ready-made requests (register, login, `/me` using the login token).
 
