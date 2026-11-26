@@ -1,0 +1,270 @@
+{
+  "info": {
+    "name": "MyApp - Online Shopping API",
+    "description": "Phase 1 (auth) and F1 (catalog). Run 'Auth > Login as admin' first: it stores the token used by all admin requests. Create requests store the new id in a collection variable, so later requests use it automatically.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5127" },
+    { "key": "adminToken", "value": "" },
+    { "key": "customerToken", "value": "" },
+    { "key": "categoryId", "value": "" },
+    { "key": "subcategoryId", "value": "" },
+    { "key": "tagId", "value": "" },
+    { "key": "productId", "value": "" },
+    { "key": "imageId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register customer",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "if (pm.response.code === 200) pm.collectionVariables.set('customerToken', pm.response.json().accessToken);"
+          ] } }],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/register",
+            "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"Test Customer\",\n  \"email\": \"customer1@myapp.local\",\n  \"password\": \"Customer123!\"\n}" },
+            "description": "200 with a token. 409 if the email is already registered: then use 'Login as customer'."
+          }
+        },
+        {
+          "name": "Login as customer",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "if (pm.response.code === 200) pm.collectionVariables.set('customerToken', pm.response.json().accessToken);"
+          ] } }],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"customer1@myapp.local\",\n  \"password\": \"Customer123!\"\n}" }
+          }
+        },
+        {
+          "name": "Login as admin",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "if (pm.response.code === 200) pm.collectionVariables.set('adminToken', pm.response.json().accessToken);"
+          ] } }],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@myapp.local\",\n  \"password\": \"Admin123!\"\n}" },
+            "description": "Seeded admin from SeedAdmin:* in appsettings.Development.json."
+          }
+        },
+        {
+          "name": "Me (current user)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/auth/me" }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Get category tree (public)",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/categories" }
+        },
+        {
+          "name": "Create category (admin)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "if (pm.response.code === 201) pm.collectionVariables.set('categoryId', pm.response.json().id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/categories",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Electronics\",\n  \"description\": \"Phones, laptops and accessories\"\n}" },
+            "description": "201. 409 if a category with the same name already exists."
+          }
+        },
+        {
+          "name": "Create subcategory (admin)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "if (pm.response.code === 201) pm.collectionVariables.set('subcategoryId', pm.response.json().id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/categories",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Phones\",\n  \"parentCategoryId\": {{categoryId}}\n}" }
+          }
+        },
+        {
+          "name": "Get category by id (public)",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/categories/{{categoryId}}" }
+        },
+        {
+          "name": "Update category (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/categories/{{subcategoryId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Smartphones\",\n  \"description\": \"Renamed\",\n  \"parentCategoryId\": {{categoryId}}\n}" },
+            "description": "400 if the parent would create a cycle (a category under its own subcategory)."
+          }
+        },
+        {
+          "name": "Create category as customer (expect 403)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/categories",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Not allowed\"\n}" }
+          }
+        },
+        {
+          "name": "Delete category (admin)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/categories/{{subcategoryId}}",
+            "description": "204. 409 while it still has products or subcategories."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tags",
+      "item": [
+        {
+          "name": "Get all tags (public)",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/tags" }
+        },
+        {
+          "name": "Create tag (admin)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "if (pm.response.code === 201) pm.collectionVariables.set('tagId', pm.response.json().id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/tags",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"New arrival\"\n}" }
+          }
+        },
+        {
+          "name": "Get tag by id (public)",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/tags/{{tagId}}" }
+        },
+        {
+          "name": "Delete tag (admin)",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/tags/{{tagId}}" }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Create product (admin/vendor)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "if (pm.response.code === 201) pm.collectionVariables.set('productId', pm.response.json().id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/products",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Phone X\",\n  \"description\": \"6.1 inch screen, 128 GB\",\n  \"price\": 499.99,\n  \"stockQuantity\": 25,\n  \"categoryId\": {{subcategoryId}},\n  \"tagIds\": [{{tagId}}],\n  \"isActive\": true\n}" },
+            "description": "400 if the category or a tag doesn't exist, or price/stock is negative."
+          }
+        },
+        {
+          "name": "Get products (public, paged)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/products?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get products by category (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/products?categoryId={{categoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"],
+              "query": [{ "key": "categoryId", "value": "{{categoryId}}" }]
+            },
+            "description": "Includes products in all subcategories of this category."
+          }
+        },
+        {
+          "name": "Get product by id (public)",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/products/{{productId}}" }
+        },
+        {
+          "name": "Update product (admin/vendor)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/products/{{productId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Phone X Pro\",\n  \"description\": \"6.1 inch screen, 256 GB\",\n  \"price\": 599.99,\n  \"stockQuantity\": 20,\n  \"categoryId\": {{subcategoryId}},\n  \"tagIds\": [],\n  \"isActive\": true\n}" },
+            "description": "Replaces all fields, including the tag list."
+          }
+        },
+        {
+          "name": "Update stock (admin/vendor)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/products/{{productId}}/stock",
+            "body": { "mode": "raw", "raw": "{\n  \"quantity\": 10\n}" }
+          }
+        },
+        {
+          "name": "Upload image (admin/vendor)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "if (pm.response.code === 201) pm.collectionVariables.set('imageId', pm.response.json().id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/products/{{productId}}/images",
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": [] }]
+            },
+            "description": "In the Body tab, choose a .jpg/.png/.webp file (max 5 MB) for the 'file' key. The response url can be opened at {{baseUrl}}<url>."
+          }
+        },
+        {
+          "name": "Set main image (admin/vendor)",
+          "request": { "method": "PUT", "url": "{{baseUrl}}/api/products/{{productId}}/images/{{imageId}}/main" }
+        },
+        {
+          "name": "Delete image (admin/vendor)",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/products/{{productId}}/images/{{imageId}}" }
+        },
+        {
+          "name": "Delete product (soft, admin/vendor)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/products/{{productId}}",
+            "description": "Hides the product: it disappears from the list and its details return 404."
+          }
+        }
+      ]
+    }
+  ]
+}

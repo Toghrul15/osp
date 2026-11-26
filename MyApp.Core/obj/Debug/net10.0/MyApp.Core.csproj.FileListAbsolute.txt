@@ -10,3 +10,4 @@ D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.Core\obj\Debug\ne
 D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.Core\obj\Debug\net10.0\refint\MyApp.Core.dll
 D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.Core\obj\Debug\net10.0\MyApp.Core.pdb
 D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.Core\obj\Debug\net10.0\ref\MyApp.Core.dll
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.Core\obj\Debug\net10.0\MyApp.Core.sourcelink.json

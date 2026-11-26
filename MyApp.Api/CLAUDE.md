@@ -53,4 +53,5 @@ Dependencies go strictly downward: **Api → BLL → DAL → Core**.
 - Delete behaviour: links to orders, products, categories and vendors use Restrict, so history is never cascade-deleted. Avoid adding cascades that create multiple cascade paths, which SQL Server rejects.
 - `AverageRating`/`ReviewCount` on `Product` are stored totals. Recalculate them whenever reviews change.
 - Request validation currently uses DataAnnotations on DTOs (`[ApiController]` returns 400 automatically).
+- Catalog (F1): categories/tags are Admin-only writes; products are written by `Admin,Vendor`, and `ProductService.EnsureCanManage` limits vendors to their own products. Slugs come from `BLL/Common/SlugHelper` and must be unique (409). Product images are saved by `Api/Services/LocalFileStorage` (`IFileStorage`) under `wwwroot/uploads/products` and served by `UseStaticFiles`. Paged lists return `BLL/Common/PagedResult<T>`; `ProductQuery` is where F6 search/filter parameters go.
 - The project folder is inside OneDrive and is not under git.

@@ -24,4 +24,91 @@ Content-Type: application/json
 GET {{MyApp.Api_HostAddress}}/api/auth/me
 Authorization: Bearer {{login.response.body.$.accessToken}}
 
+### ---------- Catalog (F1) ----------
+
+### Create a category (admin)
+# @name category
+POST {{MyApp.Api_HostAddress}}/api/categories
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Electronics",
+  "description": "Phones, laptops and accessories"
+}
+
+### Create a subcategory (admin)
+# @name subcategory
+POST {{MyApp.Api_HostAddress}}/api/categories
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Phones",
+  "parentCategoryId": {{category.response.body.$.id}}
+}
+
+### Category tree (public)
+GET {{MyApp.Api_HostAddress}}/api/categories
+
+### Create a tag (admin)
+# @name tag
+POST {{MyApp.Api_HostAddress}}/api/tags
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "New arrival"
+}
+
+### Tags (public)
+GET {{MyApp.Api_HostAddress}}/api/tags
+
+### Create a product (admin or vendor)
+# @name product
+POST {{MyApp.Api_HostAddress}}/api/products
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Phone X",
+  "description": "6.1 inch screen, 128 GB",
+  "price": 499.99,
+  "stockQuantity": 25,
+  "categoryId": {{subcategory.response.body.$.id}},
+  "tagIds": [{{tag.response.body.$.id}}],
+  "isActive": true
+}
+
+### Product list (public, paged; categoryId includes subcategories)
+GET {{MyApp.Api_HostAddress}}/api/products?page=1&pageSize=20&categoryId={{category.response.body.$.id}}
+
+### Product details (public)
+GET {{MyApp.Api_HostAddress}}/api/products/{{product.response.body.$.id}}
+
+### Set stock
+PATCH {{MyApp.Api_HostAddress}}/api/products/{{product.response.body.$.id}}/stock
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "quantity": 10
+}
+
+### Upload an image (put a phone.jpg next to this file)
+POST {{MyApp.Api_HostAddress}}/api/products/{{product.response.body.$.id}}/images
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="phone.jpg"
+Content-Type: image/jpeg
+
+< ./phone.jpg
+--boundary--
+
+### Soft-delete the product
+DELETE {{MyApp.Api_HostAddress}}/api/products/{{product.response.body.$.id}}
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
 ###

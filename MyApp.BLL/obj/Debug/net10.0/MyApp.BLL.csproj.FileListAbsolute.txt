@@ -15,3 +15,4 @@ D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.BLL\obj\Debug\net
 D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.BLL\obj\Debug\net10.0\refint\MyApp.BLL.dll
 D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.BLL\obj\Debug\net10.0\MyApp.BLL.pdb
 D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.BLL\obj\Debug\net10.0\ref\MyApp.BLL.dll
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.BLL\obj\Debug\net10.0\MyApp.BLL.sourcelink.json

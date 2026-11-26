@@ -13,3 +13,4 @@ D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.DAL\obj\Debug\net
 D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.DAL\obj\Debug\net10.0\refint\MyApp.DAL.dll
 D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.DAL\obj\Debug\net10.0\MyApp.DAL.pdb
 D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.DAL\obj\Debug\net10.0\ref\MyApp.DAL.dll
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.DAL\obj\Debug\net10.0\MyApp.DAL.sourcelink.json
