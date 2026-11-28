@@ -28,6 +28,7 @@ public class TokenService(IOptions<JwtOptions> options) : ITokenService
             new(AppClaimTypes.UserId, user.Id),
             new(AppClaimTypes.Email, user.Email ?? string.Empty),
             new(AppClaimTypes.Name, user.FullName),
+            new(AppClaimTypes.SecurityStamp, user.SecurityStamp ?? string.Empty),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
         claims.AddRange(roles.Select(role => new Claim(AppClaimTypes.Role, role)));

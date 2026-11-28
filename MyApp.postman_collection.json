@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "MyApp - Online Shopping API",
-    "description": "Phase 1 (auth), F1 (catalog), F6 (search), F2 (cart), F4 addresses, F3 (orders), F8 (coupons) and F7 (reviews). Run 'Auth > Login as admin' first: it stores the token used by all admin requests. Create requests store the new id in a collection variable, so later requests use it automatically.",
+    "description": "Phase 1 (auth), F1 (catalog), F6 (search), F2 (cart), F4 addresses, F3 (orders), F8 (coupons), F7 (reviews) and F5 (admin panel, vendor area). Run 'Auth > Login as admin' first: it stores the token used by all admin requests. Create requests store the new id in a collection variable, so later requests use it automatically.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -21,7 +21,9 @@
     { "key": "orderId", "value": "" },
     { "key": "couponId", "value": "" },
     { "key": "couponCode", "value": "" },
-    { "key": "reviewId", "value": "" }
+    { "key": "reviewId", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "vendorToken", "value": "" }
   ],
   "item": [
     {
@@ -682,6 +684,134 @@
         {
           "name": "Remove review",
           "request": { "method": "DELETE", "url": "{{baseUrl}}/api/admin/reviews/{{reviewId}}" }
+        }
+      ]
+    },
+    {
+      "name": "Admin Users & Dashboard",
+      "description": "User management and store overview. Uses the admin token. Blocking or changing roles logs the user out immediately (their old token gets 401).",
+      "item": [
+        {
+          "name": "Dashboard",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/admin/dashboard" }
+        },
+        {
+          "name": "All users",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const items = pm.response.json().items || []; const c = items.find(u => !u.roles.includes('Admin')); if (c) pm.collectionVariables.set('userId', c.id);"
+          ] } }],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" },
+                { "key": "search", "value": "customer1", "description": "Name or email", "disabled": true },
+                { "key": "role", "value": "Vendor", "description": "Admin, Vendor, Customer", "disabled": true },
+                { "key": "isBlocked", "value": "true", "disabled": true }
+              ]
+            },
+            "description": "Saves the first non-admin user's id as {{userId}}."
+          }
+        },
+        {
+          "name": "Get user",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/admin/users/{{userId}}" }
+        },
+        {
+          "name": "Make vendor",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/admin/users/{{userId}}/roles",
+            "body": { "mode": "raw", "raw": "{\n  \"roles\": [\"Customer\", \"Vendor\"]\n}" },
+            "description": "The complete role list. The user must log in again to get the new roles."
+          }
+        },
+        {
+          "name": "Remove vendor role",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/admin/users/{{userId}}/roles",
+            "body": { "mode": "raw", "raw": "{\n  \"roles\": [\"Customer\"]\n}" }
+          }
+        },
+        {
+          "name": "Block user",
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/admin/users/{{userId}}/block" }
+        },
+        {
+          "name": "Unblock user",
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/admin/users/{{userId}}/unblock" }
+        }
+      ]
+    },
+    {
+      "name": "Vendor",
+      "description": "Vendor area. Uses {{vendorToken}}: make a user a vendor ('Admin Users > Make vendor'), then log in as them with 'Login as vendor'.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{vendorToken}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Login as vendor",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "if (pm.response.code === 200) pm.collectionVariables.set('vendorToken', pm.response.json().accessToken);"
+          ] } }],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"customer1@myapp.local\",\n  \"password\": \"Customer123!\"\n}" },
+            "description": "Use the email of the user you made a vendor."
+          }
+        },
+        {
+          "name": "Create product as vendor",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/products",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Handmade Mug\",\n  \"description\": \"Ceramic, 350 ml\",\n  \"price\": 15,\n  \"stockQuantity\": 30,\n  \"categoryId\": {{categoryId}},\n  \"tagIds\": [],\n  \"isActive\": true\n}" }
+          }
+        },
+        {
+          "name": "My products (incl. inactive)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/products?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendor", "products"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" },
+                { "key": "isActive", "value": "false", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Orders with my products",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/orders?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendor", "orders"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" },
+                { "key": "status", "value": "Pending", "disabled": true }
+              ]
+            }
+          }
         }
       ]
     },

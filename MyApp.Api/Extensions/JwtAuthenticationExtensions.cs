@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using MyApp.BLL.Options;
 using MyApp.BLL.Security;
+using MyApp.BLL.Services;
 
 namespace MyApp.Api.Extensions;
 
@@ -33,6 +34,21 @@ public static class JwtAuthenticationExtensions
                     ClockSkew = TimeSpan.FromMinutes(1),
                     NameClaimType = AppClaimTypes.Name,
                     RoleClaimType = AppClaimTypes.Role
+                };
+                options.Events = new JwtBearerEvents
+                {
+                    OnTokenValidated = async context =>
+                    {
+                        var userId = context.Principal?.FindFirst(AppClaimTypes.UserId)?.Value;
+                        var stamp = context.Principal?.FindFirst(AppClaimTypes.SecurityStamp)?.Value;
+                        var authService = context.HttpContext.RequestServices.GetRequiredService<IAuthService>();
+
+                        if (userId is null || stamp is null
+                            || !await authService.IsSessionValidAsync(userId, stamp, context.HttpContext.RequestAborted))
+                        {
+                            context.Fail("The session has ended. Log in again.");
+                        }
+                    }
                 };
             });
 

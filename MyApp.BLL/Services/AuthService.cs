@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using MyApp.BLL.DTOs.Auth;
 using MyApp.BLL.Exceptions;
 using MyApp.Core.Constants;
@@ -11,6 +12,12 @@ public interface IAuthService
     Task<AuthResponse> RegisterAsync(RegisterRequest request);
     Task<AuthResponse> LoginAsync(LoginRequest request);
     Task<UserDto> GetUserAsync(string userId);
+
+    /// <summary>
+    /// true when the token still belongs to an existing, unblocked user whose security stamp hasn't changed
+    /// (blocking a user or changing their roles changes the stamp, which ends every existing session).
+    /// </summary>
+    Task<bool> IsSessionValidAsync(string userId, string securityStamp, CancellationToken cancellationToken = default);
 }
 
 public class AuthService(UserManager<AppUser> userManager, ITokenService tokenService) : IAuthService
@@ -57,6 +64,17 @@ public class AuthService(UserManager<AppUser> userManager, ITokenService tokenSe
 
         var roles = await userManager.GetRolesAsync(user);
         return ToDto(user, roles);
+    }
+
+    public async Task<bool> IsSessionValidAsync(string userId, string securityStamp,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await userManager.Users.AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => new { u.IsBlocked, u.SecurityStamp })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return user is not null && !user.IsBlocked && user.SecurityStamp == securityStamp;
     }
 
     private async Task<AuthResponse> BuildAuthResponseAsync(AppUser user)
