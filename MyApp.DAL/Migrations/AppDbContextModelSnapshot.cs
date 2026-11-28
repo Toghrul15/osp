@@ -501,6 +501,7 @@ namespace MyApp.DAL.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("Status")
+                        .IsConcurrencyToken()
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");

@@ -16,7 +16,7 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         });
 
         builder.Property(o => o.OrderNumber).HasMaxLength(30).IsRequired();
-        builder.Property(o => o.Status).HasConversion<string>().HasMaxLength(20);
+        builder.Property(o => o.Status).HasConversion<string>().HasMaxLength(20).IsConcurrencyToken();
         builder.Property(o => o.PaymentStatus).HasConversion<string>().HasMaxLength(20);
         builder.Property(o => o.CouponCode).HasMaxLength(50);
 

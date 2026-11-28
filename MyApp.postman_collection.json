@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "MyApp - Online Shopping API",
-    "description": "Phase 1 (auth), F1 (catalog), F6 (search and filters) and F2 (cart). Run 'Auth > Login as admin' first: it stores the token used by all admin requests. Create requests store the new id in a collection variable, so later requests use it automatically.",
+    "description": "Phase 1 (auth), F1 (catalog), F6 (search), F2 (cart), F4 addresses and F3 (orders). Run 'Auth > Login as admin' first: it stores the token used by all admin requests. Create requests store the new id in a collection variable, so later requests use it automatically.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -16,7 +16,9 @@
     { "key": "subcategoryId", "value": "" },
     { "key": "tagId", "value": "" },
     { "key": "productId", "value": "" },
-    { "key": "imageId", "value": "" }
+    { "key": "imageId", "value": "" },
+    { "key": "addressId", "value": "" },
+    { "key": "orderId", "value": "" }
   ],
   "item": [
     {
@@ -388,6 +390,185 @@
         {
           "name": "Get cart without token (expect 401)",
           "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/cart" }
+        }
+      ]
+    },
+    {
+      "name": "Addresses",
+      "description": "The customer's saved delivery addresses. Uses the customer token.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Add address",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "if (pm.response.code === 201) pm.collectionVariables.set('addressId', pm.response.json().id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/account/addresses",
+            "body": { "mode": "raw", "raw": "{\n  \"recipientName\": \"Test Customer\",\n  \"phoneNumber\": \"+994 50 123 45 67\",\n  \"line1\": \"10 Nizami St\",\n  \"line2\": \"Apt 5\",\n  \"city\": \"Baku\",\n  \"postalCode\": \"AZ1000\",\n  \"country\": \"Azerbaijan\",\n  \"isDefault\": false\n}" },
+            "description": "The first address becomes the default automatically. Max 10."
+          }
+        },
+        {
+          "name": "Get my addresses",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/account/addresses" }
+        },
+        {
+          "name": "Get address",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/account/addresses/{{addressId}}" }
+        },
+        {
+          "name": "Edit address",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/account/addresses/{{addressId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"recipientName\": \"Test Customer\",\n  \"phoneNumber\": \"+994 50 123 45 67\",\n  \"line1\": \"22 Fuzuli St\",\n  \"city\": \"Baku\",\n  \"postalCode\": \"AZ1001\",\n  \"country\": \"Azerbaijan\",\n  \"isDefault\": true\n}" }
+          }
+        },
+        {
+          "name": "Make default",
+          "request": { "method": "PUT", "url": "{{baseUrl}}/api/account/addresses/{{addressId}}/default" }
+        },
+        {
+          "name": "Delete address",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/account/addresses/{{addressId}}",
+            "description": "Run this last: checkout needs {{addressId}}."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "description": "Checkout and the customer's own orders. Uses the customer token. Before checkout: add something to the cart ('Cart > Add item') and save an address ('Addresses > Add address').",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Checkout (place order)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "if (pm.response.code === 201) pm.collectionVariables.set('orderId', pm.response.json().id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/orders",
+            "body": { "mode": "raw", "raw": "{\n  \"addressId\": {{addressId}}\n}" },
+            "description": "400 if the cart is empty or items are unavailable/over stock (see 'errors'). Decreases stock and empties the cart."
+          }
+        },
+        {
+          "name": "My orders",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/orders?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" },
+                { "key": "status", "value": "Pending", "description": "Pending, Processing, Shipped, Delivered, Cancelled", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get my order",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/orders/{{orderId}}" }
+        },
+        {
+          "name": "Cancel my order (Pending only)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/orders/{{orderId}}/cancel",
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Ordered by mistake\"\n}" },
+            "description": "Puts the items back into stock. 400 once the order is Processing or later."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin Orders",
+      "description": "All orders and status changes. Uses the admin token. Status flow: Pending -> Processing -> Shipped -> Delivered; Pending/Processing -> Cancelled.",
+      "item": [
+        {
+          "name": "All orders",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/orders?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "orders"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" },
+                { "key": "status", "value": "Pending", "disabled": true },
+                { "key": "search", "value": "ORD-", "description": "Order number, customer email or name", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get order",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/admin/orders/{{orderId}}" }
+        },
+        {
+          "name": "Status -> Processing",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/admin/orders/{{orderId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"Processing\",\n  \"note\": \"Packing your order\"\n}" }
+          }
+        },
+        {
+          "name": "Status -> Shipped",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/admin/orders/{{orderId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"Shipped\",\n  \"note\": \"Tracking number AZ123456\"\n}" }
+          }
+        },
+        {
+          "name": "Status -> Delivered",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/admin/orders/{{orderId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"Delivered\"\n}" },
+            "description": "Also marks the payment as Paid."
+          }
+        },
+        {
+          "name": "Status -> Cancelled",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/admin/orders/{{orderId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"Cancelled\",\n  \"note\": \"Out of stock at the warehouse\"\n}" },
+            "description": "Only from Pending or Processing. Puts the items back into stock."
+          }
+        },
+        {
+          "name": "Invalid move (expect 400)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/admin/orders/{{orderId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"Pending\"\n}" }
+          }
         }
       ]
     }
