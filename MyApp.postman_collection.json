@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "MyApp - Online Shopping API",
-    "description": "Phase 1 (auth), F1 (catalog) and F6 (search and filters). Run 'Auth > Login as admin' first: it stores the token used by all admin requests. Create requests store the new id in a collection variable, so later requests use it automatically.",
+    "description": "Phase 1 (auth), F1 (catalog), F6 (search and filters) and F2 (cart). Run 'Auth > Login as admin' first: it stores the token used by all admin requests. Create requests store the new id in a collection variable, so later requests use it automatically.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -333,6 +333,61 @@
             "url": "{{baseUrl}}/api/products/{{productId}}",
             "description": "Hides the product: it disappears from the list and its details return 404."
           }
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "description": "Every request uses the customer token: run 'Auth > Register customer' or 'Login as customer' first. Uses {{productId}} from 'Products > Create product' (don't delete that product first). Every request returns the whole cart with a summary.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Get cart",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/cart" }
+        },
+        {
+          "name": "Add item",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/cart/items",
+            "body": { "mode": "raw", "raw": "{\n  \"productId\": {{productId}},\n  \"quantity\": 2\n}" },
+            "description": "Adding a product that is already in the cart increases its quantity. 400 if over stock, out of stock, inactive, or quantity outside 1-99. 404 if the product doesn't exist."
+          }
+        },
+        {
+          "name": "Update item quantity",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/cart/items/{{productId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"quantity\": 1\n}" },
+            "description": "Sets the quantity (1-99). 404 if the product isn't in the cart."
+          }
+        },
+        {
+          "name": "Add more than stock (expect 400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/cart/items",
+            "body": { "mode": "raw", "raw": "{\n  \"productId\": {{productId}},\n  \"quantity\": 99\n}" }
+          }
+        },
+        {
+          "name": "Remove item",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/cart/items/{{productId}}" }
+        },
+        {
+          "name": "Clear cart",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/cart" }
+        },
+        {
+          "name": "Get cart without token (expect 401)",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/cart" }
         }
       ]
     }

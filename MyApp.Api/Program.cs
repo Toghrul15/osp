@@ -1,4 +1,6 @@
+using System.Text.Json.Serialization;
 using MyApp.Api.Extensions;
+using MyApp.Api.OpenApi;
 using MyApp.Api.Middleware;
 using MyApp.Api.Services;
 using MyApp.BLL;
@@ -17,8 +19,16 @@ builder.Services.AddScoped<IFileStorage, LocalFileStorage>();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<AppExceptionHandler>();
 
-builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+builder.Services.AddControllers()
+    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer<ApiInfoTransformer>();
+    options.AddOperationTransformer<AuthorizeOperationTransformer>();
+});
 
 var app = builder.Build();
 
@@ -27,6 +37,13 @@ app.UseExceptionHandler();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "MyApp API v1");
+        options.RoutePrefix = "swagger";
+        options.DocumentTitle = "MyApp API";
+        options.EnablePersistAuthorization();
+    });
 }
 
 app.UseHttpsRedirection();

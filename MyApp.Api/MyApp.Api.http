@@ -112,6 +112,49 @@ Content-Type: image/jpeg
 < ./phone.jpg
 --boundary--
 
+### ---------- Cart (F2): uses the customer token ----------
+
+### Log in as a customer (register first)
+# @name customerLogin
+POST {{MyApp.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "customer@myapp.local",
+  "password": "Customer123!"
+}
+
+### Add to cart (adds to the quantity if already in the cart)
+POST {{MyApp.Api_HostAddress}}/api/cart/items
+Authorization: Bearer {{customerLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "productId": {{product.response.body.$.id}},
+  "quantity": 2
+}
+
+### Get cart with price summary
+GET {{MyApp.Api_HostAddress}}/api/cart
+Authorization: Bearer {{customerLogin.response.body.$.accessToken}}
+
+### Change quantity
+PUT {{MyApp.Api_HostAddress}}/api/cart/items/{{product.response.body.$.id}}
+Authorization: Bearer {{customerLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "quantity": 1
+}
+
+### Remove item
+DELETE {{MyApp.Api_HostAddress}}/api/cart/items/{{product.response.body.$.id}}
+Authorization: Bearer {{customerLogin.response.body.$.accessToken}}
+
+### Clear cart
+DELETE {{MyApp.Api_HostAddress}}/api/cart
+Authorization: Bearer {{customerLogin.response.body.$.accessToken}}
+
 ### Soft-delete the product
 DELETE {{MyApp.Api_HostAddress}}/api/products/{{product.response.body.$.id}}
 Authorization: Bearer {{login.response.body.$.accessToken}}

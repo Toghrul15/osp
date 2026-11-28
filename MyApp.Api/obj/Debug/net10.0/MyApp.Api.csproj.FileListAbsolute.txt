@@ -175,3 +175,7 @@ D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.Api\bin\Debug\net
 D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.Api\bin\Debug\net10.0\MyApp.Api.staticwebassets.runtime.json
 D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.Api\obj\Debug\net10.0\MyApp.Api.sourcelink.json
 D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.Api\bin\Debug\net10.0\appsettings.Development.example.json
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.Api\bin\Debug\net10.0\MyApp.Api.xml
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.Api\bin\Debug\net10.0\Swashbuckle.AspNetCore.SwaggerUI.dll
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.Api\bin\Debug\net10.0\MyApp.BLL.xml
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.Api\obj\Debug\net10.0\MyApp.Api.xml
