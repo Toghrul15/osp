@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "MyApp - Online Shopping API",
-    "description": "Phase 1 (auth), F1 (catalog), F6 (search), F2 (cart), F4 addresses, F3 (orders) and F8 (coupons). Run 'Auth > Login as admin' first: it stores the token used by all admin requests. Create requests store the new id in a collection variable, so later requests use it automatically.",
+    "description": "Phase 1 (auth), F1 (catalog), F6 (search), F2 (cart), F4 addresses, F3 (orders), F8 (coupons) and F7 (reviews). Run 'Auth > Login as admin' first: it stores the token used by all admin requests. Create requests store the new id in a collection variable, so later requests use it automatically.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -20,7 +20,8 @@
     { "key": "addressId", "value": "" },
     { "key": "orderId", "value": "" },
     { "key": "couponId", "value": "" },
-    { "key": "couponCode", "value": "" }
+    { "key": "couponCode", "value": "" },
+    { "key": "reviewId", "value": "" }
   ],
   "item": [
     {
@@ -594,6 +595,93 @@
             "url": "{{baseUrl}}/api/admin/orders/{{orderId}}/status",
             "body": { "mode": "raw", "raw": "{\n  \"status\": \"Pending\"\n}" }
           }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "description": "Product reviews. Uses the customer token. To review, the customer needs a Delivered order with {{productId}}: run 'Orders > Checkout', then 'Admin Orders > Status -> Processing / Shipped / Delivered'.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Product reviews + rating summary (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/reviews?page=1&pageSize=10&sort=Newest",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}", "reviews"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "10" },
+                { "key": "sort", "value": "Newest", "description": "Newest, HighestRating, LowestRating" },
+                { "key": "rating", "value": "5", "description": "Only this many stars", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Can I review? / my review",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/products/{{productId}}/reviews/me" }
+        },
+        {
+          "name": "Write review",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/products/{{productId}}/reviews",
+            "body": { "mode": "raw", "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Great product, fast delivery!\"\n}" },
+            "description": "403 if no delivered order contains the product. 409 if already reviewed."
+          }
+        },
+        {
+          "name": "Edit my review",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/products/{{productId}}/reviews/me",
+            "body": { "mode": "raw", "raw": "{\n  \"rating\": 4,\n  \"comment\": \"Still good after a month.\"\n}" }
+          }
+        },
+        {
+          "name": "Delete my review",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/products/{{productId}}/reviews/me" }
+        }
+      ]
+    },
+    {
+      "name": "Admin Reviews",
+      "description": "Review moderation. Uses the admin token.",
+      "item": [
+        {
+          "name": "All reviews",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const items = pm.response.json().items || []; if (items.length) pm.collectionVariables.set('reviewId', items[0].id);"
+          ] } }],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/reviews?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "reviews"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" },
+                { "key": "productId", "value": "{{productId}}", "disabled": true },
+                { "key": "rating", "value": "1", "disabled": true },
+                { "key": "sort", "value": "LowestRating", "disabled": true }
+              ]
+            },
+            "description": "Saves the first review's id as {{reviewId}}."
+          }
+        },
+        {
+          "name": "Remove review",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/admin/reviews/{{reviewId}}" }
         }
       ]
     },
