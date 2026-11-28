@@ -9,6 +9,10 @@ public class CheckoutRequest
     /// <summary>Id of one of my saved addresses. A copy of it is stored with the order.</summary>
     [Range(1, int.MaxValue)]
     public int AddressId { get; set; }
+
+    /// <summary>Optional coupon code (not case-sensitive). Check it first with POST /api/coupons/preview.</summary>
+    [StringLength(50)]
+    public string? CouponCode { get; set; }
 }
 
 public class CancelOrderRequest

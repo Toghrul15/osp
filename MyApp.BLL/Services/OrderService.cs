@@ -26,6 +26,7 @@ public class OrderService(
     IRepository<CartItem> cartItems,
     IRepository<Product> products,
     IAddressService addressService,
+    ICouponService couponService,
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser) : IOrderService
 {
@@ -64,6 +65,11 @@ public class OrderService(
         if (problems.Count > 0)
             throw new BadRequestException("Some items in your cart can't be ordered. Update your cart and try again.", problems);
 
+        var subtotal = items.Sum(i => i.Product.Price * i.Quantity);
+        Coupon? coupon = null;
+        if (!string.IsNullOrWhiteSpace(request.CouponCode))
+            coupon = await couponService.GetUsableCouponAsync(request.CouponCode, subtotal, cancellationToken);
+
         var order = new Order
         {
             OrderNumber = GenerateOrderNumber(),
@@ -86,9 +92,11 @@ public class OrderService(
             cartItems.Remove(item);
         }
 
-        order.Subtotal = order.Items.Sum(i => i.UnitPrice * i.Quantity);
-        order.DiscountAmount = 0m;
+        order.Subtotal = subtotal;
+        order.DiscountAmount = coupon is null ? 0m : CouponService.CalculateDiscount(coupon, subtotal);
         order.Total = order.Subtotal - order.DiscountAmount;
+        order.CouponId = coupon?.Id;
+        order.CouponCode = coupon?.Code;
         order.StatusHistory.Add(new OrderStatusHistory
         {
             Status = OrderStatus.Pending,
@@ -99,6 +107,13 @@ public class OrderService(
         await orders.AddAsync(order, cancellationToken);
 
         await using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken);
+
+        if (coupon is not null && !await couponService.TryReserveUseAsync(coupon.Id, cancellationToken))
+        {
+            await transaction.RollbackAsync(CancellationToken.None);
+            throw new BadRequestException("This coupon has just reached its usage limit. Try again without it.");
+        }
+
         try
         {
             await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -207,6 +222,10 @@ public class OrderService(
         try
         {
             await unitOfWork.SaveChangesAsync(cancellationToken);
+
+            if (target == OrderStatus.Cancelled && order.CouponId is not null)
+                await couponService.ReleaseUseAsync(order.CouponId.Value, cancellationToken);
+
             await transaction.CommitAsync(cancellationToken);
         }
         catch (DbUpdateConcurrencyException)

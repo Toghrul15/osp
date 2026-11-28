@@ -22,10 +22,12 @@ public class OrdersController(IOrderService orderService) : ControllerBase
     /// - copies the address, so later address edits don't affect it
     /// - decreases the stock and empties the cart
     ///
+    /// - applies the optional `couponCode` (discount stored on the order, one coupon use taken)
+    ///
     /// The order starts as **Pending** with payment **Pending** (cash on delivery; it becomes Paid on delivery).
     /// </remarks>
     /// <response code="201">Order placed.</response>
-    /// <response code="400">The cart is empty, or some items are unavailable or over stock (listed in `errors`).</response>
+    /// <response code="400">The cart is empty, some items are unavailable or over stock (listed in `errors`), or the coupon can't be used.</response>
     /// <response code="401">Not logged in.</response>
     /// <response code="404">The address isn't one of mine.</response>
     /// <response code="409">Someone bought the same items at the same moment; review the cart and retry.</response>

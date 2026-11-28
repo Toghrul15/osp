@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "MyApp - Online Shopping API",
-    "description": "Phase 1 (auth), F1 (catalog), F6 (search), F2 (cart), F4 addresses and F3 (orders). Run 'Auth > Login as admin' first: it stores the token used by all admin requests. Create requests store the new id in a collection variable, so later requests use it automatically.",
+    "description": "Phase 1 (auth), F1 (catalog), F6 (search), F2 (cart), F4 addresses, F3 (orders) and F8 (coupons). Run 'Auth > Login as admin' first: it stores the token used by all admin requests. Create requests store the new id in a collection variable, so later requests use it automatically.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -18,7 +18,9 @@
     { "key": "productId", "value": "" },
     { "key": "imageId", "value": "" },
     { "key": "addressId", "value": "" },
-    { "key": "orderId", "value": "" }
+    { "key": "orderId", "value": "" },
+    { "key": "couponId", "value": "" },
+    { "key": "couponCode", "value": "" }
   ],
   "item": [
     {
@@ -467,6 +469,29 @@
           }
         },
         {
+          "name": "Preview coupon on my cart",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/coupons/preview",
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"{{couponCode}}\"\n}" },
+            "description": "Shows subtotal, discount and total without using the coupon. 400 with the reason if it can't be used."
+          }
+        },
+        {
+          "name": "Checkout with coupon",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "if (pm.response.code === 201) pm.collectionVariables.set('orderId', pm.response.json().id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/orders",
+            "body": { "mode": "raw", "raw": "{\n  \"addressId\": {{addressId}},\n  \"couponCode\": \"{{couponCode}}\"\n}" },
+            "description": "Same as checkout, plus the coupon discount. Takes one coupon use; cancelling the order gives it back."
+          }
+        },
+        {
           "name": "My orders",
           "request": {
             "method": "GET",
@@ -568,6 +593,76 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/admin/orders/{{orderId}}/status",
             "body": { "mode": "raw", "raw": "{\n  \"status\": \"Pending\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin Coupons",
+      "description": "Coupon management. Uses the admin token. Create one here, then use it from 'Orders > Preview coupon' / 'Checkout with coupon' ({{couponCode}} is set automatically).",
+      "item": [
+        {
+          "name": "Create percentage coupon",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "if (pm.response.code === 201) { pm.collectionVariables.set('couponId', pm.response.json().id); pm.collectionVariables.set('couponCode', pm.response.json().code); }"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/admin/coupons",
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"WELCOME10\",\n  \"description\": \"10% off your order\",\n  \"type\": \"Percentage\",\n  \"value\": 10,\n  \"isActive\": true\n}" },
+            "description": "409 if the code exists already: change the code."
+          }
+        },
+        {
+          "name": "Create fixed-amount coupon",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "if (pm.response.code === 201) { pm.collectionVariables.set('couponId', pm.response.json().id); pm.collectionVariables.set('couponCode', pm.response.json().code); }"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/admin/coupons",
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"MINUS20\",\n  \"description\": \"20 off orders of 100 or more\",\n  \"type\": \"FixedAmount\",\n  \"value\": 20,\n  \"minOrderAmount\": 100,\n  \"usageLimit\": 50,\n  \"expiresAt\": \"2027-12-31T23:59:59Z\",\n  \"isActive\": true\n}" }
+          }
+        },
+        {
+          "name": "All coupons",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/coupons?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "coupons"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" },
+                { "key": "search", "value": "WELCOME", "disabled": true },
+                { "key": "isActive", "value": "true", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get coupon",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/admin/coupons/{{couponId}}" }
+        },
+        {
+          "name": "Deactivate coupon (update)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/admin/coupons/{{couponId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"{{couponCode}}\",\n  \"type\": \"Percentage\",\n  \"value\": 10,\n  \"isActive\": false\n}" },
+            "description": "Replaces every field. Adjust type/value to match the coupon you're editing."
+          }
+        },
+        {
+          "name": "Delete coupon",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/admin/coupons/{{couponId}}",
+            "description": "409 if it was used in an order: deactivate it instead."
           }
         }
       ]
