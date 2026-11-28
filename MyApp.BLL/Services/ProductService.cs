@@ -39,7 +39,16 @@ public class ProductService(
         var pageSize = Math.Clamp(query.PageSize, 1, ProductQuery.MaxPageSize);
         var page = Math.Max(query.Page, 1);
 
+        if (query.MinPrice is not null && query.MaxPrice is not null && query.MinPrice > query.MaxPrice)
+            throw new BadRequestException("minPrice cannot be greater than maxPrice.");
+
         var source = products.Query().Where(p => p.IsActive && !p.IsDeleted);
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var search = query.Search.Trim();
+            source = source.Where(p => p.Name.Contains(search) || p.Description.Contains(search));
+        }
 
         if (query.CategoryId is not null)
         {
@@ -47,11 +56,36 @@ public class ProductService(
             source = source.Where(p => categoryIds.Contains(p.CategoryId));
         }
 
+        if (query.TagId is not null)
+            source = source.Where(p => p.ProductTags.Any(pt => pt.TagId == query.TagId));
+
+        if (query.MinPrice is not null)
+            source = source.Where(p => p.Price >= query.MinPrice);
+
+        if (query.MaxPrice is not null)
+            source = source.Where(p => p.Price <= query.MaxPrice);
+
+        if (query.MinRating is not null)
+            source = source.Where(p => p.AverageRating >= query.MinRating);
+
+        if (query.InStock is not null)
+            source = query.InStock.Value
+                ? source.Where(p => p.StockQuantity > 0)
+                : source.Where(p => p.StockQuantity == 0);
+
         var totalCount = await source.CountAsync(cancellationToken);
 
-        var items = await source
-            .OrderByDescending(p => p.CreatedAt)
-            .ThenByDescending(p => p.Id)
+        var sorted = query.Sort switch
+        {
+            ProductSort.PriceAsc => source.OrderBy(p => p.Price).ThenBy(p => p.Id),
+            ProductSort.PriceDesc => source.OrderByDescending(p => p.Price).ThenBy(p => p.Id),
+            ProductSort.Rating => source.OrderByDescending(p => p.AverageRating)
+                .ThenByDescending(p => p.ReviewCount).ThenBy(p => p.Id),
+            ProductSort.Name => source.OrderBy(p => p.Name).ThenBy(p => p.Id),
+            _ => source.OrderByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id)
+        };
+
+        var items = await sorted
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(p => new ProductListItemDto(

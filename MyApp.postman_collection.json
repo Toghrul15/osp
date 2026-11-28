@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "MyApp - Online Shopping API",
-    "description": "Phase 1 (auth) and F1 (catalog). Run 'Auth > Login as admin' first: it stores the token used by all admin requests. Create requests store the new id in a collection variable, so later requests use it automatically.",
+    "description": "Phase 1 (auth), F1 (catalog) and F6 (search and filters). Run 'Auth > Login as admin' first: it stores the token used by all admin requests. Create requests store the new id in a collection variable, so later requests use it automatically.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -208,6 +208,76 @@
               "query": [{ "key": "categoryId", "value": "{{categoryId}}" }]
             },
             "description": "Includes products in all subcategories of this category."
+          }
+        },
+        {
+          "name": "Search products - all filters (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/products?search=phone&minPrice=100&maxPrice=1000&sort=priceAsc&page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"],
+              "query": [
+                { "key": "search", "value": "phone", "description": "Matches name or description, case-insensitive" },
+                { "key": "categoryId", "value": "{{categoryId}}", "description": "Includes subcategories", "disabled": true },
+                { "key": "tagId", "value": "{{tagId}}", "disabled": true },
+                { "key": "minPrice", "value": "100" },
+                { "key": "maxPrice", "value": "1000", "description": "400 if minPrice > maxPrice" },
+                { "key": "minRating", "value": "4", "description": "0-5", "disabled": true },
+                { "key": "inStock", "value": "true", "description": "true = stock > 0, false = sold out", "disabled": true },
+                { "key": "sort", "value": "priceAsc", "description": "newest (default), priceAsc, priceDesc, rating, name" },
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20", "description": "1-100" }
+              ]
+            },
+            "description": "Tick or untick query params in the Params tab to combine filters."
+          }
+        },
+        {
+          "name": "Search products - text only (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/products?search=phone",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"],
+              "query": [{ "key": "search", "value": "phone" }]
+            }
+          }
+        },
+        {
+          "name": "Search products - in stock, top rated (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/products?inStock=true&sort=rating",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"],
+              "query": [
+                { "key": "inStock", "value": "true" },
+                { "key": "sort", "value": "rating" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search products - invalid price range (expect 400)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/products?minPrice=500&maxPrice=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"],
+              "query": [
+                { "key": "minPrice", "value": "500" },
+                { "key": "maxPrice", "value": "100" }
+              ]
+            }
           }
         },
         {

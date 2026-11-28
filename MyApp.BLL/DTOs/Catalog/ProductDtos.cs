@@ -64,6 +64,15 @@ public class UpdateStockRequest
     public int Quantity { get; set; }
 }
 
+public enum ProductSort
+{
+    Newest,
+    PriceAsc,
+    PriceDesc,
+    Rating,
+    Name
+}
+
 public class ProductQuery
 {
     public const int MaxPageSize = 100;
@@ -74,5 +83,23 @@ public class ProductQuery
     [Range(1, MaxPageSize)]
     public int PageSize { get; set; } = 20;
 
+    [StringLength(100)]
+    public string? Search { get; set; }
+
     public int? CategoryId { get; set; }
+
+    public int? TagId { get; set; }
+
+    [Range(typeof(decimal), "0", "9999999999999999")]
+    public decimal? MinPrice { get; set; }
+
+    [Range(typeof(decimal), "0", "9999999999999999")]
+    public decimal? MaxPrice { get; set; }
+
+    [Range(0, 5)]
+    public decimal? MinRating { get; set; }
+
+    public bool? InStock { get; set; }
+
+    public ProductSort Sort { get; set; } = ProductSort.Newest;
 }

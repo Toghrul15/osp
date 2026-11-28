@@ -174,3 +174,4 @@ D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.Api\bin\Debug\net
 D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.Api\bin\Debug\net10.0\MyApp.DAL.pdb
 D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.Api\bin\Debug\net10.0\MyApp.Api.staticwebassets.runtime.json
 D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.Api\obj\Debug\net10.0\MyApp.Api.sourcelink.json
+D:\Onedrive cache\Toghrul\OneDrive\Desktop\final-project\MyApp.Api\bin\Debug\net10.0\appsettings.Development.example.json

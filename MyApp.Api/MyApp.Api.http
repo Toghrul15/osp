@@ -83,6 +83,11 @@ Content-Type: application/json
 ### Product list (public, paged; categoryId includes subcategories)
 GET {{MyApp.Api_HostAddress}}/api/products?page=1&pageSize=20&categoryId={{category.response.body.$.id}}
 
+### Search and filter products (public, F6)
+# search: name or description; sort: newest | priceAsc | priceDesc | rating | name
+# also: categoryId, tagId, minRating (0-5), inStock (true/false), page, pageSize
+GET {{MyApp.Api_HostAddress}}/api/products?search=phone&minPrice=100&maxPrice=1000&inStock=true&sort=priceAsc
+
 ### Product details (public)
 GET {{MyApp.Api_HostAddress}}/api/products/{{product.response.body.$.id}}
 
